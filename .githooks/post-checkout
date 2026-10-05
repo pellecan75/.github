@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Refresh the Graphify code graph after a branch switch.
+# Args: $1 prev HEAD, $2 new HEAD, $3 1=branch checkout / 0=file checkout.
+[ "$3" = "1" ] || exit 0
+[ "$1" != "$2" ] || exit 0
+exec "$(dirname "$0")/graphify-refresh.sh"
