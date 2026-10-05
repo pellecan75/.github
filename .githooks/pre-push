@@ -1,0 +1,15 @@
+#!/bin/sh
+# Blocks direct pushes to main — all changes enter main via PR.
+# Activate per clone: git config core.hooksPath .githooks
+# Deliberate bypass (humans only, when you really mean it): git push --no-verify
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "" >&2
+    echo "  ✗ Direct push to main is blocked." >&2
+    echo "    Push your branch and open a PR instead:" >&2
+    echo "    git push -u origin <branch> && gh pr create --draft" >&2
+    echo "" >&2
+    exit 1
+  fi
+done
+exit 0
