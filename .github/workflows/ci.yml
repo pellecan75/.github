@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    paths-ignore: ["**.md", "docs/**"]
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**"]
+
+# Actions-minute guard (house default since 2026-09-17): a new push on a
+# PR branch cancels the stale run, docs-only changes skip CI entirely, and
+# pushes to main are never cancelled. Keep this block when you extend CI —
+# it matters most on macOS runners, which bill at 10x.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest   # macos-latest for Swift/Xcode
+    steps:
+      - uses: actions/checkout@v5
+      # STARTING POINT — replace with real unknown build/test/lint, e.g.:
+      #   swift:  xcodebuild build test  (or: swift build && swift test)
+      #   python: pip install -r requirements.txt && ruff check . && pytest
+      #
+      # Until then, this syntax-checks whatever the repo actually contains
+      # (honest and green, not a rubber stamp — strengthen it as the project grows).
+      - name: Syntax check (starting point)
+        run: |
+          status=0; py=0; sh=0
+          while IFS= read -r f; do
+            py=$((py + 1))
+            python3 -m py_compile "$f" || status=1
+          done < <(find . -name '*.py' -not -path './.git/*')
+          while IFS= read -r f; do
+            sh=$((sh + 1))
+            bash -n "$f" || status=1
+          done < <(find . -name '*.sh' -not -path './.git/*')
+          echo "checked: $py Python file(s), $sh shell script(s)"
+          if [ "$py" -eq 0 ] && [ "$sh" -eq 0 ]; then
+            echo "No Python/shell files found — nothing to syntax-check yet."
+          fi
+          exit $status
